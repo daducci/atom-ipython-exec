@@ -1,0 +1,33 @@
+{
+  "name": "ipython-exec",
+  "main": "./lib/ipython-exec",
+  "version": "1.0.0",
+  "description": "Send python code to a ipython consoles running in a terminal session",
+  "activationCommands": {
+    "atom-text-editor": [
+      "ipython-exec:setwd",
+      "ipython-exec:send-command",
+      "ipython-exec:send-cell",
+      "ipython-exec:prev-cell",
+      "ipython-exec:next-cell",
+      "ipython-exec:set-iterm",
+      "ipython-exec:set-iterm2",
+      "ipython-exec:set-terminal"
+    ]
+  },
+  "repository": "https://github.com/daducci/atom-ipython-exec",
+  "keywords": [
+    "python",
+    "ipython",
+    "code",
+    "run",
+    "execute"
+  ],
+  "license": "MIT",
+  "engines": {
+    "atom": ">1.0.0"
+  },
+  "dependencies": {
+    "node-osascript": "1.0.2"
+  }
+}

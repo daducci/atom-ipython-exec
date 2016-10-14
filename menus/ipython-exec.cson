@@ -1,0 +1,21 @@
+'menu': [
+  {
+    'label': 'Packages'
+    'submenu': [
+      'label': 'ipython'
+      'submenu': [
+        { 'label': 'Change working directory', 'command': 'ipython-exec:setwd'}
+        { 'label': 'Send selection/line', 'command': 'ipython-exec:send-command'}
+        { 'label': 'Send cell', 'command': 'ipython-exec:send-cell'}
+        { 'label': 'Go to prev cell', 'command': 'ipython-exec:prev-cell'}
+        { 'label': 'Go to next cell', 'command': 'ipython-exec:next-cell'}
+        'label': 'Change app'
+        'submenu': [
+          { 'label': 'iTerm', 'command': 'ipython-exec:set-iterm'}
+          { 'label': 'iTerm2', 'command': 'ipython-exec:set-iterm2'}
+          { 'label': 'Terminal', 'command': 'ipython-exec:set-terminal'}
+        ]
+      ]
+    ]
+  }
+]
