@@ -1,16 +1,8 @@
-# Keybindings require three things to be fully defined: A selector that is
-# matched against the focused element, the keystroke and the command to
-# execute.
-#
-# Below is a basic keybinding which registers on all platforms by applying to
-# the root workspace element.
-
-# For more detailed documentation see
-# https://atom.io/docs/latest/advanced/keymaps
-
-'atom-text-editor':
-  'cmd-F9': 'ipython-exec:setwd'
+'atom-workspace atom-text-editor:not([mini])':
+  'F10': 'ipython-exec:open-terminal'
+  'ctrl-F10': 'ipython-exec:setwd'
   'F9': 'ipython-exec:send-command'
   'ctrl-enter': 'ipython-exec:send-cell'
   'ctrl-up': 'ipython-exec:prev-cell'
   'ctrl-down': 'ipython-exec:next-cell'
+# 
