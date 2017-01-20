@@ -10,7 +10,10 @@
       "ipython-exec:next-cell"
     ]
   },
-  "repository": "https://github.com/daducci/atom-ipython-exec",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daducci/atom-ipython-exec.git"
+  },
   "keywords": [ "python", "ipython", "terminal", "shell", "run", "execute" ],
   "license": "MIT",
   "engines": {
