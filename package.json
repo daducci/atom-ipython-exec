@@ -14,14 +14,7 @@
     "type": "git",
     "url": "https://github.com/daducci/atom-ipython-exec.git"
   },
-  "keywords": [
-    "python",
-    "ipython",
-    "terminal",
-    "shell",
-    "run",
-    "execute"
-  ],
+  "keywords": [ "python", "ipython", "terminal", "shell", "run", "execute" ],
   "license": "MIT",
   "engines": {
     "atom": ">1.0.0"
