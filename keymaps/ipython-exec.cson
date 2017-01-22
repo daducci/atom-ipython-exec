@@ -1,8 +1,15 @@
-'atom-workspace atom-text-editor:not([mini])':
-  'F10': 'ipython-exec:open-terminal'
-  'ctrl-F10': 'ipython-exec:setwd'
-  'F9': 'ipython-exec:send-command'
-  'ctrl-enter': 'ipython-exec:send-cell'
-  'ctrl-up': 'ipython-exec:prev-cell'
-  'ctrl-down': 'ipython-exec:next-cell'
-# 
+'.platform-linux atom-workspace':
+        'F10': 'ipython-exec:open-terminal'
+        'ctrl-F10': 'ipython-exec:setwd'
+        'F9': 'ipython-exec:send-command'
+        'ctrl-enter': 'ipython-exec:send-cell'
+        'ctrl-up': 'ipython-exec:prev-cell'
+        'ctrl-down': 'ipython-exec:next-cell'
+
+'.platform-darwin atom-workspace':
+        'cmd-F10': 'ipython-exec:open-terminal'
+        'ctrl-F10': 'ipython-exec:setwd'
+        'F9': 'ipython-exec:send-command'
+        'ctrl-enter': 'ipython-exec:send-cell'
+        'ctrl-up': 'ipython-exec:prev-cell'
+        'ctrl-down': 'ipython-exec:next-cell'
