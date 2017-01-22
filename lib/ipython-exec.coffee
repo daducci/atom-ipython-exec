@@ -1,7 +1,11 @@
 {CompositeDisposable, Point, Range} = require 'atom'
 #{BufferedProcess} = require 'atom'
 
-child_process = require('child_process')
+child_process = require( 'child_process' )
+
+if process.platform is "darwin"
+    osaNode = require( 'node-osascript' )
+    osaCommands = require( './osa-commands.coffee' )
 
 # windows' id to be used with xdotool (only linux)
 idAtom = ""
@@ -67,12 +71,6 @@ module.exports =
     catch error then return false
 
 
-  sendCode: (code) ->
-    return if not code
-    if process.platform is "darwin" then @iterm2(code)
-    else if @isTerminalOpen() then @gnometerminal(code)
-
-
   openTerminal: ->
     return unless editor = atom.workspace.getActiveTextEditor()
 
@@ -86,9 +84,20 @@ module.exports =
             CMD += ' -e ipython &'
             child_process.exec( CMD )
             idTerminal = child_process.execSync( 'xdotool search --sync --name ATOM-IPYTHON-SHELL | head -1', {stdio: 'pipe' } ).toString()
-            if atom.config.get( 'ipython-exec.notifications' )
-                atom.notifications.addSuccess("ipython terminal created")
-    # [TODO] process.platform is "darwin"
+    else if process.platform is "darwin"
+        shellProfile = atom.config.get('ipython-exec.shellProfile')
+        osaNode.execute osaCommands.openTerminal, {myProfile: shellProfile}, (error, result, raw) -> if error then console.error(error)
+        if atom.config.get 'ipython-exec.focusOnTerminal'
+            osaNode.execute 'tell application "iTerm" to activate', {}, (error, result, raw) -> if error then console.error(error)
+
+    if atom.config.get( 'ipython-exec.notifications' )
+        atom.notifications.addSuccess("ipython terminal created")
+
+
+  sendCode: (code) ->
+    return if not code
+    if process.platform is "darwin" then @iterm2(code)
+    else if @isTerminalOpen() then @gnometerminal(code)
 
 
   setWorkingDirectory: ->
@@ -194,20 +203,9 @@ module.exports =
 
 
   iterm2: (selection) ->
-    osascript = require 'node-osascript'
-    command = []
     if atom.config.get 'ipython-exec.focusOnTerminal'
-        command.push 'tell application "iTerm" to activate'
-    command.push 'tell application "iTerm"'
-    command.push '  tell the current window'
-    command.push '    tell current session'
-    command.push '      write text code'
-    command.push '    end tell'
-    command.push '  end tell'
-    command.push 'end tell'
-    command = command.join('\n')
-    osascript.execute command, {code: selection}, (error, result, raw) ->
-        if error then console.error(error)
+        osaNode.execute 'tell application "iTerm" to activate', {}, (error, result, raw) -> if error then console.error(error)
+    osaNode.execute osaCommands.writeText, {code: selection}, (error, result, raw) -> if error then console.error(error)
 
 
   gnometerminal: (selection) ->
