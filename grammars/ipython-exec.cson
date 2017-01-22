@@ -1,0 +1,15 @@
+'scopeName': 'source.python.ipython-exec'
+'name': 'Python (IDE)'
+'fileTypes': [
+  'ale'
+]
+
+'patterns': [
+  {
+    'name': 'ipythonexec.cell.python'
+    'match': '^##.*$'
+  }
+  {
+    'include': 'source.python'
+  }
+]
