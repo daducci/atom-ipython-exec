@@ -23,30 +23,30 @@ module.exports =
       description: 'String to write for copying selections/cells through clipboard (if empty, text is directly pasted).'
       type: 'string'
       default: '%paste -q'
+      order: 1
     advancePosition:
       title: 'Advance to next line'
       description: 'If True, the cursor advances to the next line after sending the current line (when there is no selection).'
       type: 'boolean'
       default: true
+      order: 2
     focusOnTerminal:
       title: 'Focus on terminal after sending commands'
       description: 'After code is sent, bring focus to the terminal.'
       type: 'boolean'
       default: false
-    shellCellStringPrefix:
-      title: 'Cell separator'
-      description: 'String prefix to delimit different cells.'
-      type: 'string'
-      default: '##'
+      order: 3
     shellProfile:
       title: 'Shell profile'
       description: 'Create a terminal with this profile'
       type: 'string'
       default: ''
+      order: 4
     notifications:
       type: 'boolean'
       default: true
       description: 'Send notifications in case of errors/warnings'
+      order: 5
 
   subscriptions: null
 
@@ -141,18 +141,17 @@ module.exports =
     return if process.platform is "linux" and not @isTerminalOpen()
 
     lines = editor.buffer.getLines()
-    cellPrefix = atom.config.get('ipython-exec.shellCellStringPrefix')
     pos = editor.getCursorBufferPosition().row
 
     # get cell boundaries
     first = 0
     last = nLines-1
     for i in [pos..0]
-        if lines[i].indexOf(cellPrefix) == 0
+        if lines[i].indexOf('##') == 0
             first = i
             break
     for i in[pos+1...nLines]
-        if lines[i].indexOf(cellPrefix) == 0
+        if lines[i].indexOf('##') == 0
             last = i-1
             break
 
@@ -167,15 +166,13 @@ module.exports =
   moveToPrevCell: ->
     return unless editor = atom.workspace.getActiveTextEditor()
     return unless nLines = editor.getLineCount()
-
-    lines = editor.buffer.getLines()
-    cellPrefix = atom.config.get('ipython-exec.shellCellStringPrefix')
-    return unless pos = editor.getCursorBufferPosition().row # skip first line
+    return unless pos = editor.getCursorBufferPosition().row
 
     # get row of prev cell
+    lines = editor.buffer.getLines()
     nextPos = 0
     for i in [pos-1...0]
-        if lines[i].indexOf(cellPrefix) == 0
+        if lines[i].indexOf('##') == 0
             nextPos = i
             break
 
@@ -186,15 +183,13 @@ module.exports =
   moveToNextCell: ->
     return unless editor = atom.workspace.getActiveTextEditor()
     return unless nLines = editor.getLineCount()
-
-    lines = editor.buffer.getLines()
-    cellPrefix = atom.config.get('ipython-exec.shellCellStringPrefix')
-    pos = editor.getCursorBufferPosition().row
+    return unless pos = editor.getCursorBufferPosition().row
 
     # get row of next cell
+    lines = editor.buffer.getLines()
     nextPos = pos
     for i in[pos+1...nLines]
-        if lines[i].indexOf(cellPrefix) == 0
+        if lines[i].indexOf('##') == 0
             nextPos = i
             break
 
