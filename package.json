@@ -18,8 +18,5 @@
   "license": "MIT",
   "engines": {
     "atom": ">1.0.0"
-  },
-  "dependencies": {
-    "node-osascript": "1.0.2"
   }
 }

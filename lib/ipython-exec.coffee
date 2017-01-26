@@ -1,15 +1,13 @@
 {CompositeDisposable, Point, Range} = require 'atom'
-#{BufferedProcess} = require 'atom'
 
 child_process = require( 'child_process' )
 
 if process.platform is "darwin"
-    osaNode = require( 'node-osascript' )
     osaCommands = require( './osa-commands.coffee' )
-
-# windows' id to be used with xdotool (only linux)
-idAtom = ""
-idTerminal = ""
+else
+    # windows' id to be used with xdotool (only linux)
+    idAtom = ""
+    idTerminal = ""
 
 
 String::addSlashes = ->
@@ -66,55 +64,104 @@ module.exports =
     @subscriptions.dispose()
 
 
+  osaPrepareCmd: ( CMDs, VARs ) ->
+    return "" if CMDs.length is 0
+    CMD = "osascript"
+    for key, value of VARs
+        CMD += " -e 'set " + key + " to "
+        if typeof(value) == "string"
+            CMD += '"' + value + '"'
+        else
+            CMD += value
+        CMD += "'"
+    if typeof(CMDs) is "object"
+        for c in CMDs
+            CMD += " -e '" + c.trim() + "'"
+    else
+        CMD += " -e '" + CMDs.trim() + "'"
+    return CMD
+
+
+  # Change grammar to "Python (IDE)"
+  changeGrammar: ->
+    return unless editor = atom.workspace.getActiveTextEditor()
+    if editor.getGrammar().scopeName is 'source.python'
+        editor.setGrammar( atom.grammars.grammarForScopeName('source.python.ipython-exec') )
+
+
   isTerminalOpen: ->
-    try child_process.execSync( "xdotool getwindowname "+idTerminal ); return true
-    catch error then return false
+    if process.platform is "linux"
+        try child_process.execSync( "xdotool getwindowname "+idTerminal ); return true
+        catch error then return false
+    else
+        CMD = @osaPrepareCmd( osaCommands.isTerminalOpen, {} )
+        val = child_process.execSync( CMD ).toString()
+        return ( val[0] is "t" )
 
 
   openTerminal: ->
     return unless editor = atom.workspace.getActiveTextEditor()
+    @changeGrammar()
+
+    shellProfile = atom.config.get('ipython-exec.shellProfile')
 
     if process.platform is "linux"
         child_process.exec( 'xdotool getactivewindow', (error, stdout, stderr) -> idAtom = stdout )
-        if not @isTerminalOpen()
-            shellProfile = atom.config.get('ipython-exec.shellProfile')
-            CMD = 'gnome-terminal --title=ATOM-IPYTHON-SHELL'
-            if shellProfile
-                CMD += " --profile="+shellProfile
-            CMD += ' -e ipython &'
-            child_process.exec( CMD )
-            idTerminal = child_process.execSync( 'xdotool search --sync --name ATOM-IPYTHON-SHELL | head -1', {stdio: 'pipe' } ).toString()
-    else if process.platform is "darwin"
-        shellProfile = atom.config.get('ipython-exec.shellProfile')
-        osaNode.execute osaCommands.openTerminal, {myProfile: shellProfile}, (error, result, raw) -> if error then console.error(error)
-        if atom.config.get 'ipython-exec.focusOnTerminal'
-            osaNode.execute 'tell application "iTerm" to activate', {}, (error, result, raw) -> if error then console.error(error)
+        CMD = 'gnome-terminal --title=ATOM-IPYTHON-SHELL'
+        if shellProfile
+            CMD += " --profile="+shellProfile
+        CMD += ' -e ipython &'
+        child_process.exec( CMD )
+        idTerminal = child_process.execSync( 'xdotool search --sync --name ATOM-IPYTHON-SHELL | head -1', {stdio: 'pipe' } ).toString()
+        if !atom.config.get('ipython-exec.focusOnTerminal')
+            child_process.execSync( 'xdotool windowactivate '+idAtom )
+    else
+        CMD = @osaPrepareCmd( osaCommands.openTerminal, {'myProfile': shellProfile} )
+        child_process.execSync( CMD )
+        if atom.config.get('ipython-exec.focusOnTerminal')
+            CMD = @osaPrepareCmd( 'tell application "iTerm" to activate', {} )
+            child_process.execSync( CMD )
 
-    if atom.config.get( 'ipython-exec.notifications' )
-        atom.notifications.addSuccess("ipython terminal created")
+    if atom.config.get('ipython-exec.notifications')
+        atom.notifications.addSuccess("[ipython-exec] ipython terminal connected")
 
 
   sendCode: (code) ->
     return if not code
+    if not @isTerminalOpen()
+        if atom.config.get('ipython-exec.notifications')
+            atom.notifications.addError("[ipython-exec] Open the ipython terminal first")
+        return
+
     if process.platform is "darwin" then @iterm2(code)
-    else if @isTerminalOpen() then @gnometerminal(code)
+    else @gnometerminal(code)
 
 
   setWorkingDirectory: ->
     return unless editor = atom.workspace.getActiveTextEditor()
-    return if process.platform is "linux" and not @isTerminalOpen()
+    if not @isTerminalOpen()
+        if atom.config.get('ipython-exec.notifications')
+            atom.notifications.addError("[ipython-exec] Open the ipython terminal first")
+        return
+    @changeGrammar()
 
     cwd = editor.getPath()
     if not cwd
-        if atom.config.get( 'ipython-exec.notifications' )
-            atom.notifications.addWarning("Cannot get working directory from file: save the file first")
+        if atom.config.get('ipython-exec.notifications')
+            atom.notifications.addWarning("[ipython-exec] Cannot get working directory from file: save it first")
             return
+    if atom.config.get('ipython-exec.notifications')
+        atom.notifications.addSuccess("[ipython-exec] Changing working directory")
     @sendCode( ('cd "' + cwd.substring(0, cwd.lastIndexOf('/')) + '"').addSlashes() )
 
 
   sendCommand: ->
     return unless editor = atom.workspace.getActiveTextEditor()
-    return if process.platform is "linux" and not @isTerminalOpen()
+    @changeGrammar()
+    if not @isTerminalOpen()
+        if atom.config.get('ipython-exec.notifications')
+            atom.notifications.addError("[ipython-exec] Open the ipython terminal first")
+        return
 
     textToPaste = atom.config.get('ipython-exec.textToPaste').addSlashes()
     if selection = editor.getSelectedText()
@@ -131,14 +178,18 @@ module.exports =
                 @sendCode( textToPaste )
             else
                 @sendCode( line.addSlashes() )
-        if atom.config.get 'ipython-exec.advancePosition'
+        if atom.config.get('ipython-exec.advancePosition')
             editor.moveDown( 1 )
 
 
   sendCell: ->
     return unless editor = atom.workspace.getActiveTextEditor()
     return unless nLines = editor.getLineCount()
-    return if process.platform is "linux" and not @isTerminalOpen()
+    @changeGrammar()
+    if not @isTerminalOpen()
+        if atom.config.get('ipython-exec.notifications')
+            atom.notifications.addError("[ipython-exec] Open the ipython terminal first")
+        return
 
     lines = editor.buffer.getLines()
     pos = editor.getCursorBufferPosition().row
@@ -156,17 +207,15 @@ module.exports =
             break
 
     # pass text to shell through clipboard
-    textToPaste = atom.config.get('ipython-exec.textToPaste').addSlashes()
-    selection = editor.getTextInBufferRange( [[first, 0], [last, Infinity]] )
-    return if not selection
-    atom.clipboard.write( selection )
-    @sendCode( textToPaste )
+    return unless codeToExecute = editor.getTextInBufferRange( [[first, 0], [last, Infinity]] ).trim()
+    atom.clipboard.write( codeToExecute )
+    @sendCode( atom.config.get('ipython-exec.textToPaste').addSlashes() )
 
 
   moveToPrevCell: ->
     return unless editor = atom.workspace.getActiveTextEditor()
-    return unless nLines = editor.getLineCount()
     return unless pos = editor.getCursorBufferPosition().row
+    @changeGrammar()
 
     # get row of prev cell
     lines = editor.buffer.getLines()
@@ -183,7 +232,8 @@ module.exports =
   moveToNextCell: ->
     return unless editor = atom.workspace.getActiveTextEditor()
     return unless nLines = editor.getLineCount()
-    return unless pos = editor.getCursorBufferPosition().row
+    pos = editor.getCursorBufferPosition().row
+    @changeGrammar()
 
     # get row of next cell
     lines = editor.buffer.getLines()
@@ -192,20 +242,21 @@ module.exports =
         if lines[i].indexOf('##') == 0
             nextPos = i
             break
-
     # move cursor
     editor.setCursorBufferPosition([nextPos, 0])
 
 
-  iterm2: (selection) ->
+  iterm2: (codeToExecute) ->
     if atom.config.get 'ipython-exec.focusOnTerminal'
-        osaNode.execute 'tell application "iTerm" to activate', {}, (error, result, raw) -> if error then console.error(error)
-    osaNode.execute osaCommands.writeText, {code: selection}, (error, result, raw) -> if error then console.error(error)
+        CMD = @osaPrepareCmd( 'tell application "iTerm" to activate', {} )
+        child_process.execSync( CMD ).toString()
+    CMD = @osaPrepareCmd( osaCommands.writeText, {'myCode':codeToExecute} )
+    child_process.execSync( CMD )
 
 
-  gnometerminal: (selection) ->
+  gnometerminal: (codeToExecute) ->
     child_process.execSync( 'xdotool windowactivate '+idTerminal )
-    child_process.execSync( 'xdotool type --delay 10 --clearmodifiers "'+selection+'"' )
+    child_process.execSync( 'xdotool type --delay 10 --clearmodifiers "'+codeToExecute+'"' )
     child_process.execSync( 'xdotool key --clearmodifiers Return' )
     if !atom.config.get 'ipython-exec.focusOnTerminal'
         child_process.execSync( 'xdotool windowactivate '+idAtom )
