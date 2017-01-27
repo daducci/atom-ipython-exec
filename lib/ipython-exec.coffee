@@ -150,7 +150,7 @@ module.exports =
     if not cwd
         if atom.config.get('ipython-exec.notifications')
             atom.notifications.addWarning("[ipython-exec] Cannot get working directory from file: save it first")
-            return
+        return
     if atom.config.get('ipython-exec.notifications')
         atom.notifications.addSuccess("[ipython-exec] Changing working directory")
     @sendCode( ('cd "' + cwd.substring(0, cwd.lastIndexOf('/')) + '"').addSlashes() )
