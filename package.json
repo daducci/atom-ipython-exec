@@ -1,7 +1,7 @@
 {
   "name": "ipython-exec",
   "main": "./lib/ipython-exec",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Send python code to an ipython consoles running in a terminal session",
   "activationCommands": {
     "atom-text-editor": [
