@@ -106,7 +106,8 @@ module.exports =
     shellProfile = atom.config.get('ipython-exec.shellProfile')
 
     if process.platform is "linux"
-        child_process.exec( 'xdotool getactivewindow', (error, stdout, stderr) -> idAtom = stdout )
+        return if @isTerminalOpen()
+        idAtom = child_process.execSync( 'xdotool getactivewindow' ).toString()
         CMD = 'gnome-terminal --title=ATOM-IPYTHON-SHELL'
         if shellProfile
             CMD += " --profile="+shellProfile
