@@ -257,7 +257,8 @@ module.exports =
 
   gnometerminal: (codeToExecute) ->
     child_process.execSync( 'xdotool windowactivate '+idTerminal )
-    child_process.execSync( 'xdotool type --delay 10 --clearmodifiers "'+codeToExecute+'"' )
-    child_process.execSync( 'xdotool key --clearmodifiers Return' )
+    child_process.execSync( 'xvkbd -text "'+codeToExecute+'\\n"' )
+    #child_process.execSync( 'xdotool type --delay 10 --clearmodifiers "'+codeToExecute+'"' )
+    #child_process.execSync( 'xdotool key --clearmodifiers Return' )
     if !atom.config.get 'ipython-exec.focusOnTerminal'
         child_process.execSync( 'xdotool windowactivate '+idAtom )
